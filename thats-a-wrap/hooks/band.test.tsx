@@ -90,3 +90,52 @@ test('a run that skips everything still shows, then clears itself', async ($, on
   expect((await ui.find({ type: 'Text', text: /rings/ }))?.text).toBe('rings')
   await ui.unmount()
 })
+
+// usage-rings as it sits for real: outside this plugin, drawing the band without passing it on.
+const RINGS = {
+  name: 'usage-rings',
+  tier: 'prepend',
+  register(on: any) {
+    const ref = { plugin: 'usage-rings', key: 'limits' }
+    on('session.start', async ($: any, e: any, next: any) => {
+      await $.state.set(ref, [
+        { kind: 'five_hour', percentUsed: 40 },
+        { kind: 'context', percentUsed: 10 },
+      ])
+      return next(e)
+    })
+    // As its session.measure does: a new context reading, the rest kept from what it reads.
+    on('prompt.submit', async ($: any, e: any, next: any) => {
+      const { value, version } = await $.state.get(ref)
+      const kept = value.filter((l: any) => l.kind !== 'context')
+      await $.state.set(ref, [...kept, { kind: 'context', percentUsed: 12 }], { ifVersion: version })
+      return next(e)
+    })
+    on('ui.render', { component: 'AbovePrompt' }, async ($: any, e: any, next: any) => {
+      const { value = [] } = await $.state.get(ref)
+      if (value.length === 0) return next(e)
+      const { Text } = $.ui.resolve(e)
+      return <Text>{`usage ${value.length}`}</Text>
+    })
+  },
+} as const
+
+test('a run takes the band from usage-rings outside it, which keeps its limits', { plugins: [RINGS] }, async ($, on) => {
+  const { tick } = setup(on)
+  on('prompt.submit', (_: unknown, e: any) => ({ text: e.text }))
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND(100), surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /usage/ }))?.text).toBe('usage 2')
+
+  await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 0, status: 'running' })
+  await tick()
+  expect((await ui.find({ type: 'Text', text: /Inventory/ }))?.text).toBe('Inventory')
+  expect(await ui.find({ type: 'Text', text: /usage/ })).toBeUndefined()
+
+  // Its write starts from the empty read it got; the limits it could not see stay.
+  await $.prompt.submit({ text: 'go on' })
+  await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 5, status: 'done' })
+  for (let i = 0; i < 6; i++) await tick()
+  expect((await ui.find({ type: 'Text', text: /usage/ }))?.text).toBe('usage 2')
+  await ui.unmount()
+})

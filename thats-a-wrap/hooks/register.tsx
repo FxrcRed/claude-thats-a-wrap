@@ -46,6 +46,9 @@ const fresh = (): Run => ({
 // Change the tag when Run's fields change: it declines what an older version stored.
 const run = atom({ plugin: 'thats-a-wrap', key: 'run' } as const, fresh(), { shape: 'run-2' })
 const blink = atom({ plugin: 'thats-a-wrap', key: 'blink' } as const, true)
+// usage-rings loads first and draws the band without passing it on; while a run is shown,
+// its limits read as none, so it hands the band down to the bar.
+const RINGS = { plugin: 'usage-rings', key: 'limits' } as const
 
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, 20) : []
@@ -196,6 +199,20 @@ export const register: Register = on => {
     await update($, run, r => (r.credits !== null && r.isShown ? { ...r, isShown: false } : r))
 
     return next(e)
+  })
+
+  on('state.get', RINGS, async ($, e, next) => {
+    const got = await next(e)
+    if (got.deny !== undefined || !(await read($, run)).isShown) return got
+    return { value: { ...got.value, value: [] } }
+  })
+
+  // A write usage-rings makes meanwhile was worked out from that empty read: keep what it hid.
+  on('state.set', RINGS, async ($, e, next) => {
+    const { value, previous } = e
+    if (!Array.isArray(value) || !Array.isArray(previous) || !(await read($, run)).isShown) return next(e)
+    const kinds = new Set(value.map(l => l?.kind))
+    return next({ ...e, value: [...value, ...previous.filter(l => !kinds.has(l?.kind))] })
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
