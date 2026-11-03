@@ -10,7 +10,7 @@ This file holds the general order and decision rules. Project specifics (test co
 ## The pane
 When the tools `mcp__thats-a-wrap__progress` and `mcp__thats-a-wrap__credits` are available, keep the That's a wrap pane in step with the work:
 - `progress` with `step` 0–5 (the numbered sections below; the first-run question belongs to step 0) and `status` `running` as a step starts, then `done`, `skipped`, `waiting` (stopped for the user, e.g. the push checklist) or `failed` as it ends, with a few-word `note` (why it was skipped, what it waits for). Step 0 `running` starts a new run.
-- `credits` once at the very end, before the report: `commits` ("abc1234 Add X"), `pushed` ("origin/main → abc1234"), `deployed` (URLs), `open` (what is left). It plays the clapperboard, so call it only when the wrap-up really finished — not when it stopped to wait.
+- `credits` once at the very end, before the report: `commits` ("abc1234 Add X"), `pushed` ("origin/main → abc1234"), `deployed` (URLs), `open` (what is left). It plays a sound, so call it only when the wrap-up really finished — not when it stopped to wait.
 
 ## 0. Inventory (read-only, run in one batch)
 - Read the project's wrap-up section. If there is none, read the parts of CLAUDE.md / HANDOFF.md about testing, repos and deployment.

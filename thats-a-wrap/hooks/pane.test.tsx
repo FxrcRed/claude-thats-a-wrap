@@ -14,7 +14,7 @@ const PANE = {
   },
 } as const
 
-test('progress marks steps and credits roll with the clapperboard', async ($, on) => {
+test('progress marks steps and credits roll with the send sound', async ($, on) => {
   const opened: string[] = []
   const played: string[] = []
   on('tool.register', () => ({ value: undefined }))
@@ -25,6 +25,10 @@ test('progress marks steps and credits roll with the clapperboard', async ($, on
   on('audio.play', (_, e) => {
     played.push(JSON.stringify(e))
     return { value: undefined }
+  })
+  on('process.run', (_, e) => {
+    played.push(JSON.stringify(e))
+    return { value: { exitCode: 0, stdout: '', stderr: '' } }
   })
   on('ui.toast', () => ({ value: undefined }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -43,7 +47,7 @@ test('progress marks steps and credits roll with the clapperboard', async ($, on
     commits: ['abc1234 Add X'],
     pushed: ['origin/main → abc1234'],
   })
-  expect(played.join()).toContain('sounds/clap.wav')
+  expect(played.join()).toContain('sent.wav')
   expect((await ui.find({ type: 'Text', text: /abc1234 Add X/ }))?.text).toBe('abc1234 Add X')
   await ui.unmount()
 })

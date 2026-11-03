@@ -11,7 +11,7 @@ A Claude Code plugin that finishes a conversation's work end to end. Say **"wrap
 
 ## Watch it on the slate
 
-While it works, a **🎬 That's a wrap** pane beside the chat tracks the six steps: the current one lit, done ones ticked, skipped ones greyed out with the reason, and the push step paused (‖) while it waits for your OK. When everything is done the credits roll — commits, pushes, deploy URLs, what is still open — to the clack of a clapperboard.
+While it works, a **🎬 That's a wrap** pane beside the chat tracks the six steps: the current one lit, done ones ticked, skipped ones greyed out with the reason, and the push step paused (‖) while it waits for your OK. When everything is done the credits roll — commits, pushes, deploy URLs, what is still open — with a soft *swoosh*.
 
 ## Every project gets its own wrap-up
 

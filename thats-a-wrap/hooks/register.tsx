@@ -36,6 +36,27 @@ const run = atom({ plugin: 'thats-a-wrap', key: 'run' } as const, fresh(), { sha
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, 20) : []
 
+// $.audio.play has no player on Windows, so play the WAV through .NET's SoundPlayer there.
+const sent = async ($: any) => {
+  const root: string = $.plugin.root
+  try {
+    if (/^[A-Za-z]:[\\/]/.test(root)) {
+      const wav = `${root}\\sounds\\sent.wav`.replace(/\//g, '\\').replace(/'/g, "''")
+      await $.process.run([
+        'powershell',
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `(New-Object Media.SoundPlayer '${wav}').PlaySync()`,
+      ])
+    } else {
+      await $.audio.play({ asset: 'sounds/sent.wav' })
+    }
+  } catch {
+    // No sound is fine; the credits still roll.
+  }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -59,7 +80,7 @@ export const register: Register = on => {
     await $.tool.register({
       name: 'credits',
       description:
-        "Roll the credits when a wrap-up is finished: plays the clapperboard and shows what was done in the That's a wrap pane. " +
+        "Roll the credits when a wrap-up is finished: plays a soft send sound and shows what was done in the That's a wrap pane. " +
         'Each list holds short lines: commits ("abc1234 Add X"), pushed ("origin/main → abc1234"), deployed (URLs), open (what is left).',
       inputSchema: {
         type: 'object',
@@ -105,7 +126,7 @@ export const register: Register = on => {
     }
     await update($, run, r => ({ ...r, credits }))
     await $.ui.open({ id: PANE, title: TITLE })
-    void $.audio.play({ asset: 'sounds/clap.wav' }).catch(() => undefined)
+    void sent($)
     $.ui.toast("🎬 That's a wrap!")
 
     return { result: 'Credits rolled.' }
