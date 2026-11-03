@@ -75,3 +75,18 @@ test('a narrow window keeps one line: dots only', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /taking stock/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('a run that skips everything still shows, then clears itself', async ($, on) => {
+  const { tick } = setup(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND(100), surface: 'desktop' })
+  // No "step 0 running" first: the first report alone opens the bar.
+  await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 0, status: 'done', note: 'clean tree' })
+  expect((await ui.find({ type: 'Text', text: /clean tree/ }))?.text).toBe('· clean tree')
+  for (let step = 1; step <= 5; step++) {
+    await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step, status: 'skipped', note: 'nothing to do' })
+  }
+  for (let i = 0; i < 8; i++) await tick()
+  expect((await ui.find({ type: 'Text', text: /rings/ }))?.text).toBe('rings')
+  await ui.unmount()
+})

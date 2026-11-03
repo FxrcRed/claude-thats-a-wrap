@@ -87,6 +87,11 @@ async function pump($: any) {
   $.clock.after(MIN_MS, () => void pump($))
 }
 
+async function hideUnlessCredits($: any) {
+  if (queue.length > 0) return
+  await update($, run, r => (r.credits === null && r.isShown ? { ...r, isShown: false } : r))
+}
+
 function show($: any, apply: (r: Run) => Run, then?: () => void) {
   queue.push({ apply, then })
   if (!isPumping) void pump($)
@@ -146,12 +151,19 @@ export const register: Register = on => {
       return { result: 'Ignored: step must be 0-5 and status one of ' + STATUSES.join(', ') + '.' }
     }
     const note = typeof input.note === 'string' ? input.note.slice(0, 120) : ''
-    const isNewRun = step === 0 && status === 'running'
-    show($, r => {
-      const base = isNewRun ? fresh() : r
-      const steps: Step[] = base.steps.map((s, i) => (i === step ? { status, note } : s))
-      return { ...base, steps, isShown: isNewRun ? true : base.isShown }
-    })
+    const isEnd = step === STEPS.length - 1 && status !== 'running' && status !== 'waiting'
+    show(
+      $,
+      r => {
+        // Step 0 running, or any report while no run is on screen, starts a fresh run.
+        const isNewRun = (step === 0 && status === 'running') || !r.isShown || r.credits !== null
+        const base = isNewRun ? fresh() : r
+        const steps: Step[] = base.steps.map((s, i) => (i === step ? { status, note } : s))
+        return { ...base, steps, isShown: true }
+      },
+      // A run that ends without credits (nothing to ship) clears itself too.
+      isEnd ? () => $.clock.after(CLOSE_MS, () => void hideUnlessCredits($)) : undefined,
+    )
 
     return { result: `${STEPS[step]}: ${status}` }
   }).catch(() => ({ result: 'The bar could not be updated; carry on with the wrap-up.' }))
