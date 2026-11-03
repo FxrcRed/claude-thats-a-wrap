@@ -7,6 +7,11 @@ description: Finish a stretch of work end to end — commit this conversation's 
 
 This file holds the general order and decision rules. Project specifics (test commands, which repos to push, deploy command) live in the project's CLAUDE.md under "## Wrap-up" or "## 收尾". **If the project says how, do it that way; use the defaults below only when it doesn't.** Every step ends with a verdict: what was done, or "skipped: reason".
 
+## The pane
+When the tools `mcp__thats-a-wrap__progress` and `mcp__thats-a-wrap__credits` are available, keep the That's a wrap pane in step with the work:
+- `progress` with `step` 0–5 (the numbered sections below; the first-run question belongs to step 0) and `status` `running` as a step starts, then `done`, `skipped`, `waiting` (stopped for the user, e.g. the push checklist) or `failed` as it ends, with a few-word `note` (why it was skipped, what it waits for). Step 0 `running` starts a new run.
+- `credits` once at the very end, before the report: `commits` ("abc1234 Add X"), `pushed` ("origin/main → abc1234"), `deployed` (URLs), `open` (what is left). It plays the clapperboard, so call it only when the wrap-up really finished — not when it stopped to wait.
+
 ## 0. Inventory (read-only, run in one batch)
 - Read the project's wrap-up section. If there is none, read the parts of CLAUDE.md / HANDOFF.md about testing, repos and deployment.
 - `git status --short`, `git remote -v`, unpushed commits per remote (`git log --oneline <remote>/<branch>..`), `git stash list`.

@@ -9,6 +9,10 @@ A Claude Code plugin that finishes a conversation's work end to end. Say **"wrap
 5. **Pushes and deploys** — after showing you a checklist and waiting for your OK. Public-check scripts, private archives, Cloudflare and CI deploys are handled when your project has them.
 6. **Verifies online and cleans up** — remote commit matches, deploy URL responds, temp files go.
 
+## Watch it on the slate
+
+While it works, a **🎬 That's a wrap** pane beside the chat tracks the six steps: the current one lit, done ones ticked, skipped ones greyed out with the reason, and the push step paused (‖) while it waits for your OK. When everything is done the credits roll — commits, pushes, deploy URLs, what is still open — to the clack of a clapperboard.
+
 ## Every project gets its own wrap-up
 
 The first time you wrap up in a project, Claude asks once what else it needs — bump the version, update the changelog, cut a GitHub release, publish a package, skip the stop before pushing — with options taken from what is actually in the project. Your answers are saved as a `## Wrap-up` section in that project's `CLAUDE.md` and used from then on. When the project later grows something the section doesn't cover, Claude asks once; what you decline is recorded as `Not doing` and never asked again.
