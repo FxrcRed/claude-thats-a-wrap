@@ -1,0 +1,14 @@
+{
+  "name": "thats-a-wrap",
+  "description": "Finish a Claude Code conversation's work end to end",
+  "owner": {
+    "name": "FxrcRed"
+  },
+  "plugins": [
+    {
+      "name": "thats-a-wrap",
+      "source": "./thats-a-wrap",
+      "description": "Say \"wrap up\" or press That's a wrap: commit this conversation's changes, check, sync docs, push, deploy, verify. Learns each project's own steps."
+    }
+  ]
+}
