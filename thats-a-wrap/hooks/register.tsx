@@ -8,21 +8,34 @@ const PROMPT = 'Wrap up'
 const LABEL = "🎬 That's a wrap"
 
 const STEPS = ['Inventory', 'Commit', 'Check', 'Docs & lessons', 'Push & deploy', 'Verify & clean up']
-const SHORT = ['Inventory', 'Commit', 'Check', 'Docs', 'Push', 'Verify']
 const STATUSES: StepStatus[] = ['running', 'done', 'skipped', 'waiting', 'failed']
-const MARK: Record<StepStatus, string> = {
+// One dot per step: hollow until reached, then filled.
+const DOT: Record<StepStatus, string> = {
   pending: '○',
   running: '●',
-  done: '✓',
-  skipped: '–',
-  waiting: '‖',
-  failed: '✗',
+  done: '●',
+  skipped: '●',
+  waiting: '●',
+  failed: '●',
 }
+// How long the closing 🎬 line stays before the band goes back to other plugins.
+const CLOSE_MS = 2000
+// Every state the bar shows stays at least this long, so quick steps still register.
+const MIN_MS = 700
+// A running step's dot blinks at this rate; a waiting one is steady.
+const BLINK_MS = 500
+// The ring colours of usage-rings, so the two plugins read as one family.
+const GREEN = '#34c759'
+const ORANGE = '#ff9500'
+const ORANGE_FADED = '#ffcf8a'
+// A skipped step: a light grey dot, not the near-black dimColor gives a filled glyph.
+const GREY = '#c7c7cc'
 const COLOR: Partial<Record<StepStatus, string>> = {
-  running: 'claude',
-  done: 'success',
-  waiting: 'warning',
-  failed: 'error',
+  running: ORANGE,
+  done: GREEN,
+  waiting: ORANGE,
+  skipped: GREY,
+  failed: '#ff3b30',
 }
 
 const fresh = (): Run => ({
@@ -32,6 +45,7 @@ const fresh = (): Run => ({
 })
 // Change the tag when Run's fields change: it declines what an older version stored.
 const run = atom({ plugin: 'thats-a-wrap', key: 'run' } as const, fresh(), { shape: 'run-2' })
+const blink = atom({ plugin: 'thats-a-wrap', key: 'blink' } as const, true)
 
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, 20) : []
@@ -57,8 +71,35 @@ const sent = async ($: any) => {
   }
 }
 
+// Updates wait their turn so each shown state lasts MIN_MS; the tool calls return at once.
+const queue: { apply: (r: Run) => Run; then?: () => void }[] = []
+let isPumping = false
+
+async function pump($: any) {
+  const item = queue.shift()
+  if (item === undefined) {
+    isPumping = false
+    return
+  }
+  isPumping = true
+  await update($, run, item.apply)
+  item.then?.()
+  $.clock.after(MIN_MS, () => void pump($))
+}
+
+function show($: any, apply: (r: Run) => Run, then?: () => void) {
+  queue.push({ apply, then })
+  if (!isPumping) void pump($)
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    $.clock.every(BLINK_MS, async () => {
+      const r = await read($, run)
+      if (r.isShown && r.credits === null && r.steps.some(s => s.status === 'running')) {
+        await update($, blink, b => !b)
+      }
+    })
     await $.tool.register({
       name: 'progress',
       description:
@@ -80,7 +121,7 @@ export const register: Register = on => {
     await $.tool.register({
       name: 'credits',
       description:
-        "Roll the credits when a wrap-up is finished: plays a soft send sound and shows a summary in the That's a wrap bar above the prompt. " +
+        "Roll the credits when a wrap-up is finished: plays a soft send sound and shows 🎬 That's a wrap! in the bar above the prompt for two seconds. " +
         'Each list holds short lines: commits ("abc1234 Add X"), pushed ("origin/main → abc1234"), deployed (URLs), open (what is left).',
       inputSchema: {
         type: 'object',
@@ -106,7 +147,7 @@ export const register: Register = on => {
     }
     const note = typeof input.note === 'string' ? input.note.slice(0, 120) : ''
     const isNewRun = step === 0 && status === 'running'
-    await update($, run, r => {
+    show($, r => {
       const base = isNewRun ? fresh() : r
       const steps: Step[] = base.steps.map((s, i) => (i === step ? { status, note } : s))
       return { ...base, steps, isShown: isNewRun ? true : base.isShown }
@@ -123,9 +164,17 @@ export const register: Register = on => {
       deployed: strings(input.deployed),
       open: strings(input.open),
     }
-    await update($, run, r => ({ ...r, credits, isShown: true }))
-    void sent($)
-    $.ui.toast("🎬 That's a wrap!")
+    show(
+      $,
+      r => ({ ...r, credits, isShown: true }),
+      () => {
+        void sent($)
+        $.ui.toast("🎬 That's a wrap!")
+        $.clock.after(CLOSE_MS, () => {
+          void update($, run, r => (r.credits !== null ? { ...r, isShown: false } : r))
+        })
+      },
+    )
 
     return { result: 'Credits rolled.' }
   }).catch(() => ({ result: 'The credits could not be shown; report in chat instead.' }))
@@ -144,44 +193,44 @@ export const register: Register = on => {
     }
 
     // While a run is shown it takes the band alone; other plugins' part comes back once it clears.
+    // Always one line: what does not fit is dropped from the right, then cut.
     const { Box, Text } = $.ui.resolve(e)
-    const c = r.credits
-    const last = [...r.steps].reverse().find(s => s.status !== 'pending' && s.note !== '')
-    const summary = c === null ? [] : [
-      c.commits.length > 0 ? `${c.commits.length} commit${c.commits.length > 1 ? 's' : ''}` : '',
-      ...c.pushed.slice(0, 1),
-      ...c.deployed.slice(0, 1),
-      c.open.length > 0 ? `${c.open.length} still open` : '',
-    ].filter(x => x !== '')
+    const cols = e.props.bodyColumns ?? 80
+    if (r.credits !== null) {
+      return (
+        <Text bold wrap="truncate">
+          🎬 That's a wrap!
+        </Text>
+      )
+    }
+
+    const isLit = await read($, blink)
+    const live = r.steps.findIndex(s => s.status === 'running' || s.status === 'waiting' || s.status === 'failed')
+    const now = live >= 0 ? live : r.steps.map(s => s.status !== 'pending').lastIndexOf(true)
+    const note = now >= 0 ? r.steps[now].note : ''
 
     return (
-      <Box flexDirection="column">
-        <Box flexDirection="row" gap={1}>
-          <Text>🎬</Text>
-          {r.steps.map((s, i) => (
-            <Text
-              color={COLOR[s.status]}
-              bold={s.status === 'running' || s.status === 'waiting'}
-              dimColor={s.status === 'pending' || s.status === 'skipped'}
-            >
-              {MARK[s.status]} {SHORT[i]}
-            </Text>
-          ))}
-          {c === null && last !== undefined && (
-            <Text dimColor wrap="truncate">
-              · {last.note}
-            </Text>
-          )}
+      <Box flexDirection="row" gap={1}>
+        <Box flexDirection="row" flexShrink={0}>
+          {r.steps.map(s => {
+            const isDim = s.status === 'pending'
+            const color = s.status === 'running' && !isLit ? ORANGE_FADED : COLOR[s.status]
+            return (
+              <Text color={isDim ? undefined : color} dimColor={isDim}>
+                {DOT[s.status]}
+              </Text>
+            )
+          })}
         </Box>
-        {c !== null && (
-          <Box flexDirection="row" gap={1}>
-            <Text bold color="claude">
-              That's a wrap!
-            </Text>
-            <Text dimColor wrap="truncate">
-              {summary.join(' · ')}
-            </Text>
-          </Box>
+        {now >= 0 && cols >= 22 && (
+          <Text bold wrap="truncate">
+            {STEPS[now]}
+          </Text>
+        )}
+        {note !== '' && cols >= 40 && (
+          <Text dimColor wrap="truncate">
+            · {note}
+          </Text>
         )}
       </Box>
     )

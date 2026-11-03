@@ -3,7 +3,7 @@
 **Say "wrap up" and Claude Code finishes the conversation's work — commit, check, docs, push, deploy, verify — and stops for your OK before anything leaves your machine.**
 
 <p align="center">
-  <img alt="The That's a wrap bar above the prompt, paused at the push step waiting for your OK, and the That's a wrap button next to the model name, in light and dark" src="docs/hero.png" width="640">
+  <img alt="Six progress dots above the prompt, paused at Push &amp; deploy on your cue, and the That's a wrap button next to the model name, in light and dark" src="docs/hero.png" width="640">
 </p>
 
 Start it by saying "wrap up", pressing **🎬 That's a wrap** next to the model name, or typing `/thats-a-wrap:wrap-up`.
@@ -17,10 +17,10 @@ Start it by saying "wrap up", pressing **🎬 That's a wrap** next to the model 
 5. **Pushes and deploys** after you OK a checklist — public checks, private archives, Cloudflare and CI deploys included when your project has them.
 6. **Verifies and cleans up** — remote matches local, the site responds, temp files go.
 
-Progress shows in a bar above the prompt while it works; the bar has that spot to itself until you send your next message. When it is done the credits roll, with a soft *swoosh*:
+Progress shows as six dots above the prompt — green when done, a blinking orange dot while it works, a steady one while it waits on your cue. When it is done, the bar says so for two seconds with a soft *swoosh*, then gives the spot back:
 
 <p align="center">
-  <img alt="The finished bar in light and dark: every step ticked, then That's a wrap! with the commits, the push, the deploy URL and what is still open" src="docs/credits.png" width="640">
+  <img alt="The closing line above the prompt in light and dark: 🎬 That's a wrap!" src="docs/credits.png" width="640">
 </p>
 
 ## Every project gets its own wrap-up

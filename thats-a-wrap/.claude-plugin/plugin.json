@@ -1,6 +1,6 @@
 {
   "name": "thats-a-wrap",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Say \"wrap up\" (or press That's a wrap) to finish a conversation's work end to end: commit, check, sync docs, push, deploy, verify",
   "types": "./types/index.d.ts",
   "author": {

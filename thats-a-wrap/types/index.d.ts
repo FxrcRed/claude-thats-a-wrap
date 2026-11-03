@@ -10,6 +10,6 @@ export type Run = { steps: Step[]; credits: Credits | null; isShown: boolean }
 
 declare module 'claude-code' {
   interface PluginState {
-    'thats-a-wrap': { run: Shaped<Run> }
+    'thats-a-wrap': { run: Shaped<Run>; blink: boolean }
   }
 }
