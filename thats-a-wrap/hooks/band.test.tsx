@@ -1,26 +1,17 @@
 import { expect, test } from 'claude-code/testing'
 
-const PANE = {
+const BAND = {
   plugin: 'thats-a-wrap',
-  component: 'Pane',
-  requestId: 'thats-a-wrap',
-  props: {
-    title: "🎬 That's a wrap",
-    isFocused: false,
-    bodyColumns: 40,
-    placement: 'dock',
-    scroll: { offset: 0, bodyRows: 20 },
-    view: {},
-  },
+  component: 'AbovePrompt',
+  props: { hasSurvey: false, isWorking: true, maxRows: 10, bodyColumns: 100 },
 } as const
 
-test('progress marks steps and credits roll with the send sound', async ($, on) => {
-  const opened: string[] = []
+test('the bar above the prompt tracks steps and rolls the credits', async ($, on) => {
   const played: string[] = []
   on('tool.register', () => ({ value: undefined }))
-  on('ui.open', (_, e) => {
-    opened.push(e.id)
-    return { value: { isPlaced: true } }
+  on('ui.render', ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>rings</Text>
   })
   on('audio.play', (_, e) => {
     played.push(JSON.stringify(e))
@@ -37,10 +28,10 @@ test('progress marks steps and credits roll with the send sound', async ($, on) 
   await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 0, status: 'running' })
   await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 0, status: 'done' })
   await $.tool.call({ tool: 'mcp__thats-a-wrap__progress', step: 1, status: 'skipped', note: 'nothing to commit' })
-  expect(opened).toEqual(['thats-a-wrap'])
 
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect((await ui.find({ type: 'Text', text: /nothing to commit/ }))?.text).toBe('nothing to commit')
+  const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /nothing to commit/ }))?.text).toBe('· nothing to commit')
+  expect(await ui.find({ type: 'Text', text: /rings/ })).toBeUndefined()
 
   await $.tool.call({
     tool: 'mcp__thats-a-wrap__credits',
@@ -48,6 +39,6 @@ test('progress marks steps and credits roll with the send sound', async ($, on) 
     pushed: ['origin/main → abc1234'],
   })
   expect(played.join()).toContain('sent.wav')
-  expect((await ui.find({ type: 'Text', text: /abc1234 Add X/ }))?.text).toBe('abc1234 Add X')
+  expect((await ui.find({ type: 'Text', text: /1 commit/ }))?.text).toBe('1 commit · origin/main → abc1234')
   await ui.unmount()
 })

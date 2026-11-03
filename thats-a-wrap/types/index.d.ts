@@ -6,7 +6,7 @@ export type Credits = {
   deployed: string[]
   open: string[]
 }
-export type Run = { steps: Step[]; credits: Credits | null }
+export type Run = { steps: Step[]; credits: Credits | null; isShown: boolean }
 
 declare module 'claude-code' {
   interface PluginState {
