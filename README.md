@@ -1,17 +1,27 @@
 # 🎬 That's a wrap
 
-A Claude Code plugin that finishes a conversation's work end to end. Say **"wrap up"** (or type `/thats-a-wrap:wrap-up`), or press **🎬 That's a wrap** next to the model name, and Claude:
+**Say "wrap up" and Claude Code finishes the conversation's work — commit, check, docs, push, deploy, verify — and stops for your OK before anything leaves your machine.**
 
-1. **Takes stock** — what this conversation changed, which repos and deploys are involved, and anything elsewhere you may have forgotten (other sessions' uncommitted changes, other worktrees, unmerged branches).
+<p align="center">
+  <img alt="The That's a wrap pane beside the chat, paused at the push step waiting for your OK, and the That's a wrap button next to the model name, in light and dark" src="docs/hero.png" width="800">
+</p>
+
+Start it by saying "wrap up", pressing **🎬 That's a wrap** next to the model name, or typing `/thats-a-wrap:wrap-up`.
+
+## What it does
+
+1. **Takes stock** — what this conversation changed, and anything elsewhere you may have forgotten: other sessions' uncommitted changes, other worktrees, unmerged branches.
 2. **Commits** this conversation's changes, one commit per feature. Other sessions' work is listed, never swept in.
-3. **Checks for bugs** with your project's tests, or a syntax check and diff review when none are written down.
-4. **Syncs docs and lessons** — README, repo description, and the pitfalls of this session into your project's `CLAUDE.md`.
-5. **Pushes and deploys** — after showing you a checklist and waiting for your OK. Public-check scripts, private archives, Cloudflare and CI deploys are handled when your project has them.
-6. **Verifies online and cleans up** — remote commit matches, deploy URL responds, temp files go.
+3. **Checks for bugs** with your project's tests, or a syntax check and diff review.
+4. **Syncs docs and lessons** — README, repo description, and this session's pitfalls into `CLAUDE.md`.
+5. **Pushes and deploys** after you OK a checklist — public checks, private archives, Cloudflare and CI deploys included when your project has them.
+6. **Verifies and cleans up** — remote matches local, the site responds, temp files go.
 
-## Watch it on the slate
+When it is done the credits roll, with a soft *swoosh*:
 
-While it works, a **🎬 That's a wrap** pane beside the chat tracks the six steps: the current one lit, done ones ticked, skipped ones greyed out with the reason, and the push step paused (‖) while it waits for your OK. When everything is done the credits roll — commits, pushes, deploy URLs, what is still open — with a soft *swoosh*.
+<p align="center">
+  <img alt="The finished pane in light and dark: every step ticked, then the credits listing commits, the push, the deploy URL and what is still open" src="docs/credits.png" width="620">
+</p>
 
 ## Every project gets its own wrap-up
 
